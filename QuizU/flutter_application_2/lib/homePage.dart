@@ -1,11 +1,13 @@
-// ignore_for_file: prefer_const_constructors, non_constant_identifier_names, prefer_const_constructors_in_immutables
+// ignore_for_file: prefer_const_constructors, non_constant_identifier_names, prefer_const_constructors_in_immutables, file_names
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/leadboardPage.dart';
 import 'package:flutter_application_2/profilePage.dart';
 import 'package:flutter_application_2/quizDIalog.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
@@ -17,11 +19,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final List<Widget> _tabItems = [Home(), LeadBoardPage(), ProfilePage()];
-  PageController pagecont = PageController();
+  PageController pageCont = PageController();
   int _currentIndex = 0;
-
-  // quiz vars
-  int rightAnswers = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -66,120 +65,195 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
-// timer vars
-  Timer? timer;
-  int second = 120;
-  String? minutes;
-  startTimer() {
-    timer = Timer.periodic(Duration(seconds: 1), (_) {
+class _HomeState extends State<Home> with TickerProviderStateMixin {
+  // timer controller
+  late AnimationController controller;
+
+  // quiz vars
+  List questions = [];
+  int rightAnswer = 0;
+  int questionIndex = 0;
+
+  // timer display
+  String get countText {
+    Duration count = controller.duration! * controller.value;
+    return "${(count.inMinutes % 60).toString().padLeft(2, '0')}:${(count.inSeconds % 60).toString().padLeft(2, '0')}";
+  }
+
+  getQuestions() async {
+// https://quizu.okoul.com/Questions
+    const storage = FlutterSecureStorage();
+    String? token = await storage.read(key: "token");
+    var url = Uri.parse("https://quizu.okoul.com/Questions");
+    var response = await http.get(url, headers: {"Authorization": token!});
+    if (response.statusCode == 200) {
+      List body = jsonDecode(response.body);
       setState(() {
-        second = second--;
-        minutes = Duration(seconds: second).toString().split(".")[0];
-        print(minutes);
+        questions = body;
       });
-      if (second > 0) {}
-      timer?.cancel();
-    });
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getQuestions();
+    controller =
+        AnimationController(vsync: this, duration: Duration(seconds: 120));
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-      TextButton(
-        onPressed: () {
-          showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                startTimer();
-                //   return Quiz(
-                //       question: "",
-                //       answers: ["", "", "", ""],
-                //       rightAnswer: 0,
-                //       timer: minutes);
-                return Dialog(
-                  child: SizedBox(
-                    height: 400,
-                    width: 400,
-                    // ignore: prefer_const_literals_to_create_immutables
-                    child: Column(children: [
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Text(
-                        "$minutes",
-                        style: TextStyle(fontSize: 40),
-                      ),
-                      Divider(
-                        thickness: 3,
-                      ),
-                      SizedBox(
-                        height: 0,
-                      ),
-                      Text(
-                        "question",
-                        style: TextStyle(fontSize: 30),
-                      ),
-                      SizedBox(
-                        height: 45,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          ElevatedButton(
-                              onPressed: () {},
-                              child: Text(
-                                "answers[0]",
-                                style: TextStyle(fontSize: 15),
-                              )),
-                          ElevatedButton(
-                              onPressed: () {},
-                              child: Text(
-                                "answers[1]",
-                                style: TextStyle(fontSize: 15),
-                              ))
-                        ],
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          ElevatedButton(
-                              onPressed: () {},
-                              child: Text(
-                                "answers[2]",
-                                style: TextStyle(fontSize: 15),
-                              )),
-                          ElevatedButton(
-                              onPressed: () {},
-                              child: Text(
-                                "answers[3]",
-                                style: TextStyle(fontSize: 15),
-                              ))
-                        ],
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      ElevatedButton(
-                          onPressed: () {},
-                          child: Text(
-                            "Skip",
-                            style: TextStyle(fontSize: 15),
-                          ))
-                    ]),
-                  ),
-                );
-              });
-        },
-        child: Text(
-          "Start the Quiz U",
-          style: TextStyle(fontSize: 30),
-        ),
-      )
-    ]));
+    return SafeArea(
+      child: Center(
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        TextButton(
+          onPressed: () {
+            controller.reverse(
+                from: controller.value == 0 ? 1.0 : controller.value);
+            showDialog(
+                context: context,
+                builder: ((context) => StatefulBuilder(
+                    builder: ((context, setState) => content()))));
+            //   showDialog(
+            //       // barrierDismissible: false,
+            //       context: context,
+            //       builder: (BuildContext context) {
+            //         //   return Quiz(
+            //         //       question: "",
+            //         //       answers: ["", "", "", ""],
+            //         //       rightAnswer: 0,
+            //         //       timer: minutes);
+            //         return Container(
+            //           child: Dialog(
+            //             shape: RoundedRectangleBorder(
+            //               borderRadius: BorderRadius.circular(20),
+            //             ),
+            //             backgroundColor: Color.fromARGB(255, 177, 177, 177),
+            //             elevation: 0,
+            //             child: content(context),
+            //           ),
+            //         );
+            //       });
+          },
+          child: Text(
+            "Start the Quiz U",
+            style: TextStyle(fontSize: 30),
+          ),
+        )
+      ])),
+    );
+  }
+
+  Widget content() {
+    return Dialog(
+      child: SizedBox(
+        height: 475,
+        width: 400,
+        // ignore: prefer_const_literals_to_create_immutables
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(
+            height: 15,
+          ),
+          // Timer
+          Center(
+            child: AnimatedBuilder(
+                animation: controller,
+                builder: ((context, child) => Text(
+                      countText,
+                      style: TextStyle(fontSize: 40),
+                    ))),
+          ),
+          // End timer
+          Divider(
+            thickness: 3,
+          ),
+          SizedBox(
+            height: 0,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Text(
+              questions[questionIndex]['Question'],
+              style: TextStyle(fontSize: 30),
+            ),
+          ),
+          SizedBox(
+            height: 45,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                      onPressed: () {},
+                      child: Text(
+                        questions[questionIndex]['a'],
+                        style: TextStyle(fontSize: 15),
+                      )),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                      onPressed: () {},
+                      child: Text(
+                        questions[questionIndex]['b'],
+                        style: TextStyle(fontSize: 15),
+                      )),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                      onPressed: () {},
+                      child: Text(
+                        questions[questionIndex]['c'],
+                        style: TextStyle(fontSize: 15),
+                      )),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                      onPressed: () {},
+                      child: Text(
+                        questions[questionIndex]['d'],
+                        style: TextStyle(fontSize: 15),
+                      )),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(
+            height: 20,
+          ),
+          Center(
+            child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    questionIndex++;
+                    print(questionIndex);
+                    print(questions[questionIndex]['Question']);
+                  });
+                },
+                child: Text(
+                  "Skip",
+                  style: TextStyle(fontSize: 15),
+                )),
+          )
+        ]),
+      ),
+    );
   }
 }

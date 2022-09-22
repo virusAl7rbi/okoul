@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: isUserLogged ? HomePage() : Login(),
+      home: SafeArea(child: isUserLogged ? HomePage() : Login()),
     );
   }
 }
