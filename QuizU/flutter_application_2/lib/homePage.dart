@@ -1,5 +1,6 @@
-// ignore_for_file: prefer_const_constructors, non_constant_identifier_names, prefer_const_constructors_in_immutables, file_names
+// ignore_for_file: prefer_const_constructors, non_constant_identifier_names, prefer_const_constructors_in_immutables, file_names, unused_local_variable
 
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/leadboardPage.dart';
@@ -64,9 +65,12 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with TickerProviderStateMixin {
+  //check time Timer
+  Timer? timer;
   // timer controller
   late AnimationController controller;
-
+  //storage
+  var storage = FlutterSecureStorage();
   // quiz vars
   List questions = <Object>[];
   int rightAnswer = 0;
@@ -80,7 +84,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   getQuestions() async {
 // https://quizu.okoul.com/Questions
-    const storage = FlutterSecureStorage();
     String? token = await storage.read(key: "token");
     var url = Uri.parse("https://quizu.okoul.com/Questions");
     var response = await http.get(url, headers: {"Authorization": token!});
@@ -93,13 +96,20 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     }
   }
 
-  startQuiz() {
+  startQuizTimer() {
     controller.reverse(from: controller.value == 0 ? 1.0 : controller.value);
     ShowQuizDialog(context);
   }
 
-  quizAction() {
-    if (questions[questionIndex]['correct'] == 'd') {
+  postScore(int score) async {
+    String? token = await storage.read(key: "token");
+    var url = Uri.parse("https://quizu.okoul.com/Score");
+    var response = http
+        .post(url, headers: {"Authorization": token!}, body: {"score": score});
+  }
+
+  quizAction(String answer) {
+    if (questions[questionIndex]['correct'] == answer) {
       questionIndex++;
       rightAnswer++;
     } else {
@@ -117,6 +127,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     getQuestions();
     controller =
         AnimationController(vsync: this, duration: Duration(seconds: 120));
+    // check on timer
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // dismiss quiz dialog and show timeout dialog ==> FinishDialog()
+        Navigator.pop(context);
+        FinishDialog(rightAnswer);
+      }
+    });
   }
 
   @override
@@ -129,7 +147,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Center(
         child: TextButton(
-      onPressed: () => startQuiz(),
+      onPressed: () => startQuizTimer(),
       child: Text(
         "Start the Quiz U",
         style: TextStyle(fontSize: 30),
@@ -141,6 +159,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     BuildContext context,
   ) async {
     return await showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (context) {
           return StatefulBuilder(builder: ((context, setState) {
@@ -190,7 +209,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                  onPressed: () => quizAction(),
+                                  onPressed: () => quizAction('a'),
                                   child: Text(
                                     questions[questionIndex]['a'],
                                     style: TextStyle(fontSize: 15),
@@ -199,7 +218,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                  onPressed: () => quizAction(),
+                                  onPressed: () => quizAction('b'),
                                   child: Text(
                                     questions[questionIndex]['b'],
                                     style: TextStyle(fontSize: 15),
@@ -208,7 +227,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                  onPressed: () => quizAction(),
+                                  onPressed: () => quizAction('c'),
                                   child: Text(
                                     questions[questionIndex]['c'],
                                     style: TextStyle(fontSize: 15),
@@ -217,7 +236,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                  onPressed: () => quizAction(),
+                                  onPressed: () => quizAction('d'),
                                   child: Text(
                                     questions[questionIndex]['d'],
                                     style: TextStyle(fontSize: 15),

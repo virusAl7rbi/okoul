@@ -28,7 +28,7 @@ Widget WrongDialog() {
   );
 }
 
-Widget RightDialog(int rightQuestions) {
+Widget FinishDialog(int rightQuestions) {
   return Dialog(
     child: SizedBox(
       // ignore: sort_child_properties_last
