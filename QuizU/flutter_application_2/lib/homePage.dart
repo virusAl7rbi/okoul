@@ -1,8 +1,6 @@
 // ignore_for_file: prefer_const_constructors, non_constant_identifier_names, prefer_const_constructors_in_immutables, file_names
 
-import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/leadboardPage.dart';
 import 'package:flutter_application_2/profilePage.dart';
@@ -70,12 +68,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   late AnimationController controller;
 
   // quiz vars
-  List questions = [];
+  List questions = <Object>[];
   int rightAnswer = 0;
   int questionIndex = 0;
 
   // timer display
-  String get countText {
+  String get countdownText {
     Duration count = controller.duration! * controller.value;
     return "${(count.inMinutes % 60).toString().padLeft(2, '0')}:${(count.inSeconds % 60).toString().padLeft(2, '0')}";
   }
@@ -87,6 +85,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     var url = Uri.parse("https://quizu.okoul.com/Questions");
     var response = await http.get(url, headers: {"Authorization": token!});
     if (response.statusCode == 200) {
+      // print(response.body);
       List body = jsonDecode(response.body);
       setState(() {
         questions = body;
@@ -94,9 +93,26 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     }
   }
 
+  startQuiz() {
+    controller.reverse(from: controller.value == 0 ? 1.0 : controller.value);
+    ShowQuizDialog(context);
+  }
+
+  quizAction() {
+    if (questions[questionIndex]['correct'] == 'd') {
+      questionIndex++;
+      rightAnswer++;
+    } else {
+      controller.reset();
+      rightAnswer = 0;
+      questionIndex = 0;
+      Navigator.pop(context);
+      showDialog(context: context, builder: (context) => WrongDialog());
+    }
+  }
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getQuestions();
     controller =
@@ -105,155 +121,131 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        TextButton(
-          onPressed: () {
-            controller.reverse(
-                from: controller.value == 0 ? 1.0 : controller.value);
-            showDialog(
-                context: context,
-                builder: ((context) => StatefulBuilder(
-                    builder: ((context, setState) => content()))));
-            //   showDialog(
-            //       // barrierDismissible: false,
-            //       context: context,
-            //       builder: (BuildContext context) {
-            //         //   return Quiz(
-            //         //       question: "",
-            //         //       answers: ["", "", "", ""],
-            //         //       rightAnswer: 0,
-            //         //       timer: minutes);
-            //         return Container(
-            //           child: Dialog(
-            //             shape: RoundedRectangleBorder(
-            //               borderRadius: BorderRadius.circular(20),
-            //             ),
-            //             backgroundColor: Color.fromARGB(255, 177, 177, 177),
-            //             elevation: 0,
-            //             child: content(context),
-            //           ),
-            //         );
-            //       });
-          },
-          child: Text(
-            "Start the Quiz U",
-            style: TextStyle(fontSize: 30),
-          ),
-        )
-      ])),
-    );
+    return Center(
+        child: TextButton(
+      onPressed: () => startQuiz(),
+      child: Text(
+        "Start the Quiz U",
+        style: TextStyle(fontSize: 30),
+      ),
+    ));
   }
 
-  Widget content() {
-    return Dialog(
-      child: SizedBox(
-        height: 475,
-        width: 400,
-        // ignore: prefer_const_literals_to_create_immutables
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(
-            height: 15,
-          ),
-          // Timer
-          Center(
-            child: AnimatedBuilder(
-                animation: controller,
-                builder: ((context, child) => Text(
-                      countText,
-                      style: TextStyle(fontSize: 40),
-                    ))),
-          ),
-          // End timer
-          Divider(
-            thickness: 3,
-          ),
-          SizedBox(
-            height: 0,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Text(
-              questions[questionIndex]['Question'],
-              style: TextStyle(fontSize: 30),
-            ),
-          ),
-          SizedBox(
-            height: 45,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                      onPressed: () {},
-                      child: Text(
-                        questions[questionIndex]['a'],
-                        style: TextStyle(fontSize: 15),
-                      )),
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                      onPressed: () {},
-                      child: Text(
-                        questions[questionIndex]['b'],
-                        style: TextStyle(fontSize: 15),
-                      )),
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                      onPressed: () {},
-                      child: Text(
-                        questions[questionIndex]['c'],
-                        style: TextStyle(fontSize: 15),
-                      )),
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                      onPressed: () {},
-                      child: Text(
-                        questions[questionIndex]['d'],
-                        style: TextStyle(fontSize: 15),
-                      )),
-                ),
-              ],
-            ),
-          ),
+  Future<void> ShowQuizDialog(
+    BuildContext context,
+  ) async {
+    return await showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: ((context, setState) {
+            return Dialog(
+              child: SizedBox(
+                height: 475,
+                width: 400,
+                // ignore: prefer_const_literals_to_create_immutables
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 15,
+                      ),
+                      // Timer
+                      Center(
+                        child: AnimatedBuilder(
+                            animation: controller,
+                            builder: ((context, child) => Text(
+                                  countdownText,
+                                  style: TextStyle(fontSize: 40),
+                                ))),
+                      ),
+                      // End timer
+                      Divider(
+                        thickness: 3,
+                      ),
+                      SizedBox(
+                        height: 0,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Text(
+                          questions[questionIndex]['Question'],
+                          style: TextStyle(fontSize: 30),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 45,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                  onPressed: () => quizAction(),
+                                  child: Text(
+                                    questions[questionIndex]['a'],
+                                    style: TextStyle(fontSize: 15),
+                                  )),
+                            ),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                  onPressed: () => quizAction(),
+                                  child: Text(
+                                    questions[questionIndex]['b'],
+                                    style: TextStyle(fontSize: 15),
+                                  )),
+                            ),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                  onPressed: () => quizAction(),
+                                  child: Text(
+                                    questions[questionIndex]['c'],
+                                    style: TextStyle(fontSize: 15),
+                                  )),
+                            ),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                  onPressed: () => quizAction(),
+                                  child: Text(
+                                    questions[questionIndex]['d'],
+                                    style: TextStyle(fontSize: 15),
+                                  )),
+                            ),
+                          ],
+                        ),
+                      ),
 
-          SizedBox(
-            height: 20,
-          ),
-          Center(
-            child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    questionIndex++;
-                    print(questionIndex);
-                    print(questions[questionIndex]['Question']);
-                  });
-                },
-                child: Text(
-                  "Skip",
-                  style: TextStyle(fontSize: 15),
-                )),
-          )
-        ]),
-      ),
-    );
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Center(
+                        child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                questionIndex++;
+                              });
+                            },
+                            child: Text(
+                              "Skip",
+                              style: TextStyle(fontSize: 15),
+                            )),
+                      )
+                    ]),
+              ),
+            );
+          }));
+        });
   }
 }

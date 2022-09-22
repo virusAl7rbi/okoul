@@ -1,11 +1,8 @@
-// ignore_for_file: non_constant_identifier_names, prefer_const_constructors
-
-import 'dart:async';
-
+// ignore_for_file: non_constant_identifier_names, prefer_const_constructors, file_names
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
-Widget Wrong() {
+Widget WrongDialog() {
   return Dialog(
     // ignore: prefer_const_literals_to_create_immutables
     child: SizedBox(
@@ -17,8 +14,9 @@ Widget Wrong() {
             SizedBox(
               height: 15,
             ),
+            Text("😢", style: TextStyle(fontSize: 50)),
             Text(
-              "Wrong answer 😢",
+              "Wrong answer",
               style: TextStyle(fontSize: 30),
             ),
             SizedBox(
@@ -30,7 +28,7 @@ Widget Wrong() {
   );
 }
 
-Widget Wright(int rightQuestions) {
+Widget RightDialog(int rightQuestions) {
   return Dialog(
     child: SizedBox(
       // ignore: sort_child_properties_last
@@ -68,88 +66,6 @@ Widget Wright(int rightQuestions) {
       ),
       height: 350,
       width: 400,
-    ),
-  );
-}
-
-Widget Quiz(
-    {required String question,
-    required List<String> answers,
-    required int rightAnswer,
-    required var timer}) {
-  return Dialog(
-    child: SizedBox(
-      height: 400,
-      width: 400,
-      // ignore: prefer_const_literals_to_create_immutables
-      child: Column(children: [
-        SizedBox(
-          height: 20,
-        ),
-        Text(
-          "$timer",
-          style: TextStyle(fontSize: 40),
-        ),
-        Divider(
-          thickness: 3,
-        ),
-        SizedBox(
-          height: 0,
-        ),
-        Text(
-          question,
-          style: TextStyle(fontSize: 30),
-        ),
-        SizedBox(
-          height: 45,
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            ElevatedButton(
-                onPressed: () {},
-                child: Text(
-                  answers[0],
-                  style: TextStyle(fontSize: 15),
-                )),
-            ElevatedButton(
-                onPressed: () {},
-                child: Text(
-                  answers[1],
-                  style: TextStyle(fontSize: 15),
-                ))
-          ],
-        ),
-        SizedBox(
-          height: 20,
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            ElevatedButton(
-                onPressed: () {},
-                child: Text(
-                  answers[2],
-                  style: TextStyle(fontSize: 15),
-                )),
-            ElevatedButton(
-                onPressed: () {},
-                child: Text(
-                  answers[3],
-                  style: TextStyle(fontSize: 15),
-                ))
-          ],
-        ),
-        SizedBox(
-          height: 20,
-        ),
-        ElevatedButton(
-            onPressed: () {},
-            child: Text(
-              "Skip",
-              style: TextStyle(fontSize: 15),
-            ))
-      ]),
     ),
   );
 }
