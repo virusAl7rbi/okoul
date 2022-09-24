@@ -27,20 +27,26 @@ class _ProfilePageState extends State<ProfilePage> {
     // get user info by api
     var url = Uri.parse("https://quizu.okoul.com/UserInfo");
     var response = await http.get(url, headers: {"Authorization": token!});
-
+    String? storedRecord = await storage.read(key: "record");
+    print(storedRecord);
     // set info to variable from api
-    print(response.body);
     var body = jsonDecode(response.body);
     setState(() {
       name = body['name'].toString();
       phoneNumber = body['mobile'].toString();
+      if (storedRecord != null) {
+        // scores = jsonDecode(storedRecord);
+        scores = [
+          {"date": " 3:9pm  2022/9/24", "score": 1}
+        ];
+        print(scores);
+      }
     });
   }
 
   @override
   void initState() {
     super.initState();
-
     getData();
   }
 
@@ -61,7 +67,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: EdgeInsets.only(left: 0, top: 35),
                 child: Container(
                   padding: EdgeInsets.all(20),
-                  height: 150,
+                  height: 250,
                   width: 350,
                   decoration: BoxDecoration(
                       color: Colors.white,
@@ -83,7 +89,36 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       Text("Name: $name"),
                       Text("Phone number: $phoneNumber"),
-                      Text("highest Score: $scores"),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Divider(
+                        thickness: 3,
+                      ),
+                      Center(
+                        child: Text(
+                          "My Score",
+                          style: TextStyle(fontSize: 15),
+                        ),
+                      ),
+                      Expanded(
+                        child: SizedBox(
+                          height: 250,
+                          child: ListView.builder(
+                            itemBuilder: (context, index) {
+                              return Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(scores[index]["date"]),
+                                  Text('${scores[index]["score"]}')
+                                ],
+                              );
+                            },
+                            itemCount: scores.length,
+                          ),
+                        ),
+                      )
                     ],
                   ),
                 ),
@@ -96,7 +131,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ElevatedButton(
               onPressed: (() async {
                 const storage = FlutterSecureStorage();
-                await storage.delete(key: "token");
+                await storage.deleteAll();
                 // ignore: use_build_context_synchronously
                 Navigator.pushAndRemoveUntil(
                     context,

@@ -30,7 +30,8 @@ class _MyAppState extends State<MyApp> {
       var url = Uri.parse("https://quizu.okoul.com/Token");
       var response = await http.get(url, headers: {"Authorization": token});
       var body = jsonDecode(response.body);
-      if (body['succes'] == true) {
+      print(body);
+      if (body['success'] == true) {
         print(body);
         setState(() {
           isUserLogged = true;

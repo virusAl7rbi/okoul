@@ -23,7 +23,14 @@ class Login extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          Text("Log in"),
+          SizedBox(
+            height: 30,
+          ),
+          Center(
+              child: Text(
+            "Log in",
+            style: TextStyle(fontSize: 40),
+          )),
           Padding(
             padding: EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 40),
             child: Column(
@@ -33,19 +40,31 @@ class Login extends StatelessWidget {
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.phone),
-                    hintText: "05xxxxxxxx",
-                    label: Text("Phone number"),
-                  ),
+                      prefixIcon: Icon(Icons.phone),
+                      hintText: "05xxxxxxxx",
+                      label: Text("Phone number"),
+                      border:
+                          OutlineInputBorder(borderSide: BorderSide(width: 5))),
                   onChanged: (text) {
                     if (text.startsWith("05")) {}
                   },
+                ),
+                SizedBox(
+                  height: 8,
                 ),
                 TextField(
                   controller: otpNum,
                   maxLength: 4,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(),
+                  decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.password),
+                      hintText: "otp is 0000",
+                      label: Text("OTP"),
+                      border:
+                          OutlineInputBorder(borderSide: BorderSide(width: 5))),
+                ),
+                SizedBox(
+                  height: 15,
                 ),
                 ElevatedButton(
                     // check if phone number in DB, if not ask him about his name
@@ -56,6 +75,8 @@ class Login extends StatelessWidget {
                       var response = await http.post(url,
                           body: {"OTP": otpNum.text, "mobile": phoneNum.text});
                       var body = jsonDecode(response.body);
+                      print(body['message'].toString().contains("Token"));
+                      print(body);
                       await storage.write(key: "token", value: body['token']);
                       if (body['user_status'] == 'new') {
                         showDialog(
@@ -96,14 +117,17 @@ class Login extends StatelessWidget {
                                 ),
                               );
                             });
-                      } else if (body['msg'].toString().contains("Token")) {
+                      } else if (body['message'].toString().contains("Token")) {
                         Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(builder: (context) => HomePage()),
                             (route) => false);
                       }
                     },
-                    child: Text("Login"))
+                    child: Text(
+                      "Login",
+                      style: TextStyle(fontSize: 20),
+                    ))
               ],
             ),
           )

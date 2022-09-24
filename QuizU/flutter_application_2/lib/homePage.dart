@@ -5,9 +5,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/leadboardPage.dart';
 import 'package:flutter_application_2/profilePage.dart';
-import 'package:flutter_application_2/quizDIalog.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:share_plus/share_plus.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({super.key});
@@ -65,10 +65,10 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with TickerProviderStateMixin {
-  //check time Timer
+  // timer vars
   Timer? timer;
-  // timer controller
   late AnimationController controller;
+  int timeInSec = 121;
   //storage
   var storage = FlutterSecureStorage();
   // quiz vars
@@ -97,7 +97,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   startQuizTimer() {
-    controller.reverse(from: controller.value == 0 ? 1.0 : controller.value);
+    controller =
+        AnimationController(vsync: this, duration: Duration(seconds: timeInSec))
+          ..repeat();
+    controller.reverse(
+        from: controller.value == 0
+            ? 1.0
+            : controller.value); // to start from 2:00 and countdown
     ShowQuizDialog(context);
   }
 
@@ -108,12 +114,15 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         .post(url, headers: {"Authorization": token!}, body: {"score": score});
   }
 
-  quizAction(String answer) {
+  quizAction(String answer, BuildContext context) {
     if (questions[questionIndex]['correct'] == answer) {
-      questionIndex++;
-      rightAnswer++;
+      setState(() {
+        questionIndex++;
+        rightAnswer++;
+      });
+      return (true);
     } else {
-      controller.reset();
+      controller.stop;
       rightAnswer = 0;
       questionIndex = 0;
       Navigator.pop(context);
@@ -121,18 +130,50 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     }
   }
 
+  getTime() {
+    DateTime now = DateTime.now();
+    String period = TimeOfDay(hour: now.hour, minute: now.minute)
+        .period
+        .toString()
+        .split(".")[1];
+    return "${now.hour - 12}:${now.minute}$period  ${now.year}/${now.month}/${now.day}";
+  }
+
+  addRecord() async {
+    String time = getTime();
+    int answers = rightAnswer;
+    List record = <Object>[];
+    record.add({"date": time, "score": answers});
+    final storage = FlutterSecureStorage();
+    String? storedRecord = await storage.read(key: "record");
+    if (storedRecord == null) {
+      await storage.write(key: "record", value: record.toString());
+    } else {
+      List oldRecord = jsonDecode(storedRecord);
+      List newRecord = oldRecord + record;
+      await storage.write(key: "record", value: newRecord.toString());
+      print(newRecord);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     getQuestions();
-    controller =
-        AnimationController(vsync: this, duration: Duration(seconds: 120));
+
+    // set timer duration
+    controller = AnimationController(
+        vsync: this, duration: Duration(seconds: timeInSec));
     // check on timer
-    controller.addStatusListener((status) {
+    controller.forward().whenComplete(() {});
+    controller.addStatusListener((status) async {
       if (status == AnimationStatus.completed) {
         // dismiss quiz dialog and show timeout dialog ==> FinishDialog()
         Navigator.pop(context);
-        FinishDialog(rightAnswer);
+        showDialog(
+            context: context, builder: (context) => FinishDialog(rightAnswer));
+        // save record
+        addRecord();
       }
     });
   }
@@ -155,9 +196,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     ));
   }
 
-  Future<void> ShowQuizDialog(
-    BuildContext context,
-  ) async {
+  Future<void> ShowQuizDialog(BuildContext context) async {
     return await showDialog(
         barrierDismissible: false,
         context: context,
@@ -187,9 +226,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       Divider(
                         thickness: 3,
                       ),
-                      SizedBox(
-                        height: 0,
-                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
                         child: Text(
@@ -203,44 +239,68 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                  onPressed: () => quizAction('a'),
-                                  child: Text(
-                                    questions[questionIndex]['a'],
-                                    style: TextStyle(fontSize: 15),
-                                  )),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    onPressed: () {
+                                      if (quizAction('a', context) == true) {
+                                        setState(() {});
+                                      }
+                                    },
+                                    child: Text(
+                                      questions[questionIndex]['a'],
+                                      style: TextStyle(fontSize: 15),
+                                    )),
+                              ),
                             ),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                  onPressed: () => quizAction('b'),
-                                  child: Text(
-                                    questions[questionIndex]['b'],
-                                    style: TextStyle(fontSize: 15),
-                                  )),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    onPressed: () => {
+                                          if (quizAction('b', context) == true)
+                                            {setState(() {})}
+                                        },
+                                    child: Text(
+                                      questions[questionIndex]['b'],
+                                      style: TextStyle(fontSize: 15),
+                                    )),
+                              ),
                             ),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                  onPressed: () => quizAction('c'),
-                                  child: Text(
-                                    questions[questionIndex]['c'],
-                                    style: TextStyle(fontSize: 15),
-                                  )),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    onPressed: () => {
+                                          if (quizAction('c', context) == true)
+                                            {setState(() {})}
+                                        },
+                                    child: Text(
+                                      questions[questionIndex]['c'],
+                                      style: TextStyle(fontSize: 15),
+                                    )),
+                              ),
                             ),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                  onPressed: () => quizAction('d'),
-                                  child: Text(
-                                    questions[questionIndex]['d'],
-                                    style: TextStyle(fontSize: 15),
-                                  )),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    onPressed: () => {
+                                          if (quizAction('d', context) == true)
+                                            {setState(() {})}
+                                        },
+                                    child: Text(
+                                      questions[questionIndex]['d'],
+                                      style: TextStyle(fontSize: 15),
+                                    )),
+                              ),
                             ),
                           ],
                         ),
@@ -266,5 +326,79 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             );
           }));
         });
+  }
+
+  Widget WrongDialog() {
+    return Dialog(
+      // ignore: prefer_const_literals_to_create_immutables
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: SizedBox(
+            height: 200,
+            width: 400,
+            child: Column(
+              // ignore: prefer_const_literals_to_create_immutables
+              children: [
+                Text("😢", style: TextStyle(fontSize: 50)),
+                Text(
+                  "Wrong answer",
+                  style: TextStyle(fontSize: 30),
+                ),
+                SizedBox(
+                  height: 55,
+                ),
+                Expanded(
+                    child: ElevatedButton(
+                        onPressed: () => startQuizTimer(),
+                        child: Text("Retry"))),
+              ],
+            )),
+      ),
+      // SizedBox(
+      //   height: 20,
+      // )
+    );
+  }
+
+  Widget FinishDialog(int rightQuestions) {
+    return Dialog(
+      child: SizedBox(
+        // ignore: sort_child_properties_last
+        child: Column(
+          // ignore: prefer_const_literals_to_create_immutables
+          children: [
+            SizedBox(
+              height: 35,
+            ),
+            Text(
+              "🏁",
+              style: TextStyle(fontSize: 80),
+            ),
+            Text(
+              "\nYou have completed",
+              style: TextStyle(fontSize: 20),
+            ),
+            Text(
+              "$rightQuestions",
+              style: TextStyle(fontSize: 40),
+            ),
+            Text(
+              "Correct answer!\n",
+              style: TextStyle(fontSize: 20),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Share.share(
+                    "I answered $rightQuestions correct answers in QuizU!");
+              },
+              icon: Icon(Icons.share),
+              label: Text("Share"),
+            )
+          ],
+        ),
+        height: 350,
+        width: 400,
+      ),
+    );
   }
 }

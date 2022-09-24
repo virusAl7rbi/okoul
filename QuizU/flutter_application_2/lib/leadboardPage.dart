@@ -22,7 +22,6 @@ class _LeadBoardPageState extends State<LeadBoardPage> {
 
     var response = await http.get(url, headers: {"Authorization": token!});
     var body = jsonDecode(response.body);
-    print(body);
     setState(() {
       top10 = body;
     });
