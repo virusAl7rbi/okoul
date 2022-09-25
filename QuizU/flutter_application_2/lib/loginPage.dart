@@ -7,8 +7,8 @@ import 'package:flutter_application_2/homePage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
-class Login extends StatelessWidget {
-  Login({super.key});
+class LoginPage extends StatelessWidget {
+  LoginPage({super.key});
   FlutterSecureStorage storage = FlutterSecureStorage();
   // input felids controller
   TextEditingController phoneNum = TextEditingController();

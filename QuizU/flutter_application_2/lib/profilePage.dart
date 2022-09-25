@@ -20,25 +20,22 @@ class _ProfilePageState extends State<ProfilePage> {
   List scores = [];
 
   getData() async {
-    // get token from storage
+    // get token, score from storage
     var storage = FlutterSecureStorage();
     String? token = await storage.read(key: "token");
+    String? storedRecord = await storage.read(key: "record");
 
     // get user info by api
     var url = Uri.parse("https://quizu.okoul.com/UserInfo");
     var response = await http.get(url, headers: {"Authorization": token!});
-    String? storedRecord = await storage.read(key: "record");
-    print(storedRecord);
+
     // set info to variable from api
     var body = jsonDecode(response.body);
     setState(() {
       name = body['name'].toString();
       phoneNumber = body['mobile'].toString();
       if (storedRecord != null) {
-        // scores = jsonDecode(storedRecord);
-        scores = [
-          {"date": " 3:9pm  2022/9/24", "score": 1}
-        ];
+        scores = jsonDecode(storedRecord);
         print(scores);
       }
     });
@@ -67,8 +64,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: EdgeInsets.only(left: 0, top: 35),
                 child: Container(
                   padding: EdgeInsets.all(20),
-                  height: 250,
-                  width: 350,
+                  height: MediaQuery.of(context).size.width * 0.97,
+                  width: MediaQuery.of(context).size.width * 0.95,
                   decoration: BoxDecoration(
                       color: Colors.white,
                       boxShadow: [
@@ -100,6 +97,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           "My Score",
                           style: TextStyle(fontSize: 15),
                         ),
+                      ),
+                      SizedBox(
+                        height: 15,
                       ),
                       Expanded(
                         child: SizedBox(
@@ -135,7 +135,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 // ignore: use_build_context_synchronously
                 Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => Login()),
+                    MaterialPageRoute(builder: (context) => LoginPage()),
                     (route) => false);
               }),
               child: Text("Log out"))

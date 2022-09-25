@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
           automaticallyImplyLeading: false,
           title: Center(
-            child: Text("Quiz U"),
+            child: Text("QuizU ⏳"),
           )),
       body: _tabItems[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -75,6 +75,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   List questions = <Object>[];
   int rightAnswer = 0;
   int questionIndex = 0;
+  bool skipUsed = false;
 
   // timer display
   String get countdownText {
@@ -125,8 +126,17 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       controller.stop;
       rightAnswer = 0;
       questionIndex = 0;
+      skipUsed = false;
       Navigator.pop(context);
       showDialog(context: context, builder: (context) => WrongDialog());
+    }
+  }
+
+  to12(int time) {
+    if (time > 12) {
+      return (time - 12).abs();
+    } else {
+      return time;
     }
   }
 
@@ -136,36 +146,41 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         .period
         .toString()
         .split(".")[1];
-    return "${now.hour - 12}:${now.minute}$period  ${now.year}/${now.month}/${now.day}";
+
+    return "${now.day}/${now.month}/${now.year}   ${to12(now.hour)}:${now.minute}$period";
   }
 
   addRecord() async {
+    final storage = FlutterSecureStorage();
+    // send add score post
+    var url = Uri.parse("https://quizu.okoul.com/Score");
+    String? token = await storage.read(key: "token");
+    var response = await http.post(url,
+        headers: {"Authorization": token!},
+        body: json.encode({"score": rightAnswer}));
+
     String time = getTime();
     int answers = rightAnswer;
     List record = <Object>[];
     record.add({"date": time, "score": answers});
-    final storage = FlutterSecureStorage();
     String? storedRecord = await storage.read(key: "record");
     if (storedRecord == null) {
-      await storage.write(key: "record", value: record.toString());
+      await storage.write(key: "record", value: jsonEncode(record));
     } else {
       List oldRecord = jsonDecode(storedRecord);
       List newRecord = oldRecord + record;
-      await storage.write(key: "record", value: newRecord.toString());
-      print(newRecord);
+      await storage.write(key: "record", value: jsonEncode(newRecord));
     }
   }
 
   @override
   void initState() {
     super.initState();
+    controller = AnimationController(vsync: this);
     getQuestions();
 
-    // set timer duration
-    controller = AnimationController(
-        vsync: this, duration: Duration(seconds: timeInSec));
     // check on timer
-    controller.forward().whenComplete(() {});
+    // controller.forward().whenComplete(() {});
     controller.addStatusListener((status) async {
       if (status == AnimationStatus.completed) {
         // dismiss quiz dialog and show timeout dialog ==> FinishDialog()
@@ -312,9 +327,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       Center(
                         child: ElevatedButton(
                             onPressed: () {
-                              setState(() {
-                                questionIndex++;
-                              });
+                              if (skipUsed == false) {
+                                setState(() {
+                                  questionIndex++;
+                                  skipUsed = true;
+                                });
+                              }
                             },
                             child: Text(
                               "Skip",
@@ -349,7 +367,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 ),
                 Expanded(
                     child: ElevatedButton(
-                        onPressed: () => startQuizTimer(),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          startQuizTimer();
+                        },
                         child: Text("Retry"))),
               ],
             )),

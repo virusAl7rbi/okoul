@@ -1,5 +1,5 @@
-// ignore_for_file: avoid_print, use_build_context_synchronously
-
+// ignore_for_file: avoid_print, use_build_context_synchronously, prefer_const_constructors
+import 'dart:ui';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -20,8 +20,6 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-bool isUserLogged = false;
-
 class _MyAppState extends State<MyApp> {
   void checkUser() async {
     const storage = FlutterSecureStorage();
@@ -29,17 +27,39 @@ class _MyAppState extends State<MyApp> {
     if (token != null) {
       var url = Uri.parse("https://quizu.okoul.com/Token");
       var response = await http.get(url, headers: {"Authorization": token});
-      var body = jsonDecode(response.body);
-      print(body);
-      if (body['success'] == true) {
+      var res = jsonDecode(response.body);
+      if (res['success'] == true) {
         print(body);
         setState(() {
-          isUserLogged = true;
+          body = HomePage();
+        });
+      } else {
+        setState(() {
+          body = LoginPage();
         });
       }
     }
   }
 
+  Widget body = Scaffold(
+    body: Container(
+      decoration: BoxDecoration(),
+      alignment: Alignment.center,
+      // ignore: prefer_const_literals_to_create_immutables
+      child: ListView(shrinkWrap: true, children: [
+        Center(
+          child: Text(
+            "QuizU ⏳",
+            style: TextStyle(fontSize: 50),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: CircularProgressIndicator(),
+        )
+      ]),
+    ),
+  );
   @override
   initState() {
     super.initState();
@@ -50,7 +70,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: SafeArea(child: isUserLogged ? HomePage() : Login()),
+      home: SafeArea(child: body),
     );
   }
 }
