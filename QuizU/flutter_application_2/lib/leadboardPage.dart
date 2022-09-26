@@ -28,8 +28,13 @@ class _LeadBoardPageState extends State<LeadBoardPage> {
   }
 
   @override
+  void setState(VoidCallback fn) {
+    if (!mounted) return;
+    super.setState(fn);
+  }
+
+  @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getTop10();
   }
@@ -38,19 +43,19 @@ class _LeadBoardPageState extends State<LeadBoardPage> {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.only(top: 25),
+        padding: const EdgeInsets.only(top: 45),
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              padding: const EdgeInsets.symmetric(vertical: 35),
               child: Text(
                 "LeadBoard",
-                style: TextStyle(fontSize: 30),
+                style: TextStyle(fontSize: 40),
               ),
             ),
             Container(
-              height: 420,
-              width: MediaQuery.of(context).size.width - 40,
+              height: 430,
+              width: MediaQuery.of(context).size.width * 0.85,
               padding: EdgeInsets.all(30),
               decoration: BoxDecoration(
                   color: Colors.white,
@@ -65,6 +70,7 @@ class _LeadBoardPageState extends State<LeadBoardPage> {
                   ],
                   borderRadius: BorderRadius.circular(10)),
               child: ListView.builder(
+                physics: NeverScrollableScrollPhysics(),
                 itemCount: top10.length,
                 itemBuilder: (BuildContext context, int index) {
                   return Column(

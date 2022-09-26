@@ -33,11 +33,11 @@ class _MyAppState extends State<MyApp> {
         setState(() {
           body = HomePage();
         });
-      } else {
-        setState(() {
-          body = LoginPage();
-        });
       }
+    } else {
+      setState(() {
+        body = LoginPage();
+      });
     }
   }
 
@@ -70,6 +70,21 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        colorScheme: ColorScheme.light(
+            background: Color.fromARGB(1, 30, 189, 186),
+            brightness: Brightness.light,
+            error: Colors.red,
+            onBackground: Color.fromARGB(1, 146, 212, 212),
+            onError: Colors.red,
+            // onPrimary: Color.fromARGB(1, 30, 189, 186),
+            onSecondary: Color.fromARGB(1, 100, 206, 201)),
+        inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(),
+            labelStyle: TextStyle(
+              fontSize: 15,
+            )),
+      ),
       home: SafeArea(child: body),
     );
   }

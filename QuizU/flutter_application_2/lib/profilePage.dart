@@ -36,16 +36,15 @@ class _ProfilePageState extends State<ProfilePage> {
       phoneNumber = body['mobile'].toString();
       if (storedRecord != null) {
         scores = jsonDecode(storedRecord);
-        print(scores);
       }
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    getData();
-  }
+  // @override
+  // void setState(VoidCallback fn) {
+  //   if (!mounted) return;
+  //   super.setState(fn);
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Container(
                   padding: EdgeInsets.all(20),
                   height: MediaQuery.of(context).size.width * 0.97,
-                  width: MediaQuery.of(context).size.width * 0.95,
+                  width: MediaQuery.of(context).size.width * 0.85,
                   decoration: BoxDecoration(
                       color: Colors.white,
                       boxShadow: [
@@ -110,8 +109,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(scores[index]["date"]),
-                                  Text('${scores[index]["score"]}')
+                                  Text(
+                                    scores[index]["date"],
+                                    style: TextStyle(fontSize: 17),
+                                  ),
+                                  Text(
+                                    '${scores[index]["score"]}',
+                                    style: TextStyle(fontSize: 17),
+                                  )
                                 ],
                               );
                             },

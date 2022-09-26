@@ -45,3 +45,6 @@ app.*.map.json
 
 /.vscode
 /.vscode/*
+.vscode/
+.vscode/*
+.vscode

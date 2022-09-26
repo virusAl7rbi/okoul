@@ -38,6 +38,7 @@ dependencies:
   share_plus: ^4.2.0
   http: ^0.13.5
   flutter_secure_storage: ^6.0.0
+  phone_number: ^1.0.0
 
 dev_dependencies:
   flutter_test:
