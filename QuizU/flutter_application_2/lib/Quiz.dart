@@ -25,6 +25,12 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
   int questionIndex = 0;
   bool skipUsed = false;
 
+  reset() {
+    rightAnswer = 0;
+    questionIndex = 0;
+    skipUsed = false;
+  }
+
   // timer display
   String get countdownText {
     Duration count = controller.duration! * controller.value;
@@ -78,6 +84,8 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
         });
         return true;
       } else {
+        // add last right question
+        rightAnswer++;
         // countdownText
         Navigator.pop(context);
         controller.stop;
@@ -91,9 +99,6 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
 
         // save record locally
         addRecord();
-        rightAnswer = 0;
-        questionIndex = 0;
-        skipUsed = false;
         return true;
       }
     } else {
@@ -125,11 +130,11 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
   }
 
   addRecord() async {
-    final storage = FlutterSecureStorage();
+    FlutterSecureStorage storage = FlutterSecureStorage();
     // send add score post
     var url = Uri.parse("https://quizu.okoul.com/Score");
     String? token = await storage.read(key: "token");
-    var response = await http.post(url,
+    await http.post(url,
         headers: {"Authorization": token!},
         body: json.encode({"score": rightAnswer}));
 
@@ -145,6 +150,7 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
       List newRecord = oldRecord + record;
       await storage.write(key: "record", value: jsonEncode(newRecord));
     }
+    reset();
   }
 
   @override
@@ -169,6 +175,7 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    timer?.cancel();
     controller.dispose();
     super.dispose();
   }
@@ -195,7 +202,7 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
               insetPadding: EdgeInsets.zero,
               child: SizedBox(
                 height: 500,
-                width: 400,
+                width: MediaQuery.of(context).size.width * 0.9,
                 // ignore: prefer_const_literals_to_create_immutables
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +244,7 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                     onPressed: () {
-                                      if (quizAction('a', context)) {
+                                      if (quizAction('a', context) == true) {
                                         setState(() {});
                                       }
                                     },
@@ -253,7 +260,7 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                     onPressed: () => {
-                                          if (quizAction('b', context))
+                                          if (quizAction('b', context) == true)
                                             {setState(() {})}
                                         },
                                     child: Text(
@@ -268,7 +275,7 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                     onPressed: () => {
-                                          if (quizAction('c', context))
+                                          if (quizAction('c', context) == true)
                                             {setState(() {})}
                                         },
                                     child: Text(
@@ -283,7 +290,7 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                     onPressed: () => {
-                                          if (quizAction('d', context))
+                                          if (quizAction('d', context) == true)
                                             {setState(() {})}
                                         },
                                     child: Text(
@@ -397,54 +404,57 @@ class _QuizState extends State<Quiz> with TickerProviderStateMixin {
       ),
     );
   }
-}
 
-Widget BeforeTime(String time) {
-  return Dialog(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: SizedBox(
-        // ignore: sort_child_properties_last
-        child: Column(
-          // ignore: prefer_const_literals_to_create_immutables
-          children: [
-            SizedBox(
-              height: 5,
-            ),
-            Text(
-              "🏁",
-              style: TextStyle(fontSize: 80),
-            ),
-            Text(
-              "\nYou have completed",
-              style: TextStyle(fontSize: 20),
-            ),
-            Text(
-              "30",
-              style: TextStyle(fontSize: 40),
-            ),
-            Text(
-              "Correct answer!\n",
-              style: TextStyle(fontSize: 20),
-            ),
-            Text(
-              "in",
-              style: TextStyle(fontSize: 35),
-            ),
-            Text(
-              time,
-              style: TextStyle(fontSize: 35),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.share),
-              label: Text("Share"),
-            )
-          ],
+  Widget BeforeTime(String time) {
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: SizedBox(
+          // ignore: sort_child_properties_last
+          child: Column(
+            // ignore: prefer_const_literals_to_create_immutables
+            children: [
+              SizedBox(
+                height: 5,
+              ),
+              Text(
+                "🏁",
+                style: TextStyle(fontSize: 80),
+              ),
+              Text(
+                "\nYou have completed",
+                style: TextStyle(fontSize: 20),
+              ),
+              Text(
+                "30",
+                style: TextStyle(fontSize: 40),
+              ),
+              Text(
+                "Correct answer!\n",
+                style: TextStyle(fontSize: 20),
+              ),
+              Text(
+                "in",
+                style: TextStyle(fontSize: 35),
+              ),
+              Text(
+                time,
+                style: TextStyle(fontSize: 35),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Share.share(
+                      "I answered ${rightAnswer.toString()} correct answers in $time QuizU!");
+                },
+                icon: Icon(Icons.share),
+                label: Text("Share"),
+              )
+            ],
+          ),
+          height: 380,
+          width: 400,
         ),
-        height: 380,
-        width: 400,
       ),
-    ),
-  );
+    );
+  }
 }

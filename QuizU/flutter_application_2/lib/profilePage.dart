@@ -31,6 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // set info to variable from api
     var body = jsonDecode(response.body);
+
     setState(() {
       name = body['name'].toString();
       phoneNumber = body['mobile'].toString();
@@ -38,6 +39,12 @@ class _ProfilePageState extends State<ProfilePage> {
         scores = jsonDecode(storedRecord);
       }
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
   }
 
   // @override
